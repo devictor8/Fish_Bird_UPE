@@ -120,10 +120,10 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
         EnvItem *ei = envItems + i;
         Vector2 *p = &(player->position);
         if (ei->blocking &&
-            ei->rect.x <= p->x &&
-            ei->rect.x + ei->rect.width >= p->x &&
-            ei->rect.y >= p->y &&
-            ei->rect.y <= p->y + player->speed*delta)
+    ei->rect.x <= p->x &&
+    ei->rect.x + ei->rect.width >= p->x &&
+    p->y <= ei->rect.y + ei->rect.height &&
+    p->y + player->speed*delta >= ei->rect.y + ei->rect.height)
         {
             hitObstacle = true;
             player->speed = 0.0f;
