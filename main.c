@@ -2,7 +2,7 @@
 #include "raymath.h"
 
 #define G 1000
-#define PLAYER_JUMP_SPD 350.0f
+#define PLAYER_JUMP_SPD 250.0f
 #define PLAYER_HOR_SPD 200.0f
 #define BG_SPEED 350.0f
 
@@ -33,6 +33,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
+    Texture2D texture = LoadTexture("./images/peixe-padrao.png");
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
@@ -47,7 +48,7 @@ int main(void)
 
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
 
-    Camera2D camera = { 12 };
+    Camera2D camera = {};
     camera.target = (Vector2){50, 200};
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
@@ -68,6 +69,8 @@ int main(void)
 
         // Draw 
         //----------------------------------------------------------------------------------
+        // DrawTextureV(texture, player.position, WHITE); 
+        DrawTexture(texture, player.position.x, player.position.y, WHITE);
         BeginDrawing();
 
             ClearBackground(BLUE);
@@ -85,17 +88,19 @@ int main(void)
                 }
 
                 Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
-                DrawRectangleRec(playerRect, RED);
+                // DrawRectangleRec(playerRect, RED);
                 
-                DrawCircle(player.position.x, player.position.y, 5, GOLD);
+                // DrawCircle(player.position.x, player.position.y, 5, GOLD);
 
             EndMode2D();
+            
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
+    UnloadTexture(texture);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
