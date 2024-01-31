@@ -33,7 +33,7 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
-    Texture2D texture = LoadTexture("./images/peixe-padrao.png");
+    Texture2D texture = LoadTexture("./images/peixe-padrao-pq.png");
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
@@ -70,7 +70,7 @@ int main(void)
         // Draw 
         //----------------------------------------------------------------------------------
         // DrawTextureV(texture, player.position, WHITE); 
-        DrawTexture(texture, player.position.x, player.position.y, WHITE);
+        DrawTexture(texture, player.position.x + 300, player.position.y, WHITE); 
         BeginDrawing();
 
             ClearBackground(BLUE);
@@ -81,13 +81,13 @@ int main(void)
                     envItems[i].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
 
                     // Se o item saiu completamente da tela, move-o de volta para a direita
-                    if (envItems[i].rect.x + envItems[i].rect.width < player.position.x) {
+                    if (envItems[i].rect.x + envItems[i].rect.width < player.position.x - 200) {
                     envItems[i].rect.x += screenWidth + envItems[i].rect.width;
                     }
                     DrawRectangleRec(envItems[i].rect, envItems[i].color);
                 }
 
-                Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
+                //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
                 // DrawRectangleRec(playerRect, RED);
                 
                 // DrawCircle(player.position.x, player.position.y, 5, GOLD);
