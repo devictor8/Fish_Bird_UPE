@@ -38,17 +38,17 @@ int main(void)
     Texture2D pipe = LoadTexture("./images/cano.png");
     Music music = LoadMusicStream("./images/xuxa.mp3");
     PlayMusicStream(music);
-    SetMusicVolume(music, 0.5f);
+    SetMusicVolume(music, 0.1f);
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
     // player.canJump = false;
     EnvItem envItems[] = {
-        {{ 0, 400, 1000, 200 }, 1, pipe},
-        {{ 300, 200, 400, 10 }, 1, pipe},
-        {{ 250, 300, 100, 10 }, 1, pipe},
-        {{ 650, 300, 100, 10 }, 1, pipe}
+        {{ 0, 400, 140, 200 }, 1, pipe},
+        {{ 300, 200, 140, 10 }, 1, pipe},
+        {{ 250, 300, 140, 10 }, 1, pipe},
+        {{ 650, 300, 140, 10 }, 1, pipe}
     };
 
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
@@ -91,7 +91,7 @@ int main(void)
                     if (envItems[i].rect.x + envItems[i].rect.width < player.position.x - 200) {
                     envItems[i].rect.x += screenWidth + envItems[i].rect.width;
                     }
-                    DrawTextureV(envItems[i].texture, (Vector2){envItems[i].rect.x, envItems[i].rect.y}, WHITE);
+                    DrawTextureV(envItems[i].texture, (Vector2){envItems[i].rect.x - 20, envItems[i].rect.y}, WHITE);
                 }
 
                 //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
