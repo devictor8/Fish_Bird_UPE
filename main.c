@@ -34,11 +34,14 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
     Texture2D texture = LoadTexture("./images/peixe-padrao-pq.png");
+    Music music = LoadMusicStream("./images/xuxa.mp3");
+    PlayMusicStream(music);
+    SetMusicVolume(music, 1.0f);
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
-    player.canJump = false;
+    // player.canJump = false;
     EnvItem envItems[] = {
         {{ 0, 400, 1000, 200 }, 1, GRAY },
         {{ 300, 200, 400, 10 }, 1, GRAY },
@@ -65,6 +68,8 @@ int main(void)
         float deltaTime = GetFrameTime();
 
         UpdatePlayer(&player, envItems, envItemsLength, deltaTime);
+        UpdateMusicStream(music);
+
         //-----------------------------------------------------------------------------
 
         // Draw 
@@ -101,6 +106,7 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(texture);
+    UnloadMusicStream(music);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
 
