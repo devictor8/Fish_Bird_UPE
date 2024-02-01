@@ -35,7 +35,8 @@ int main(void)
     InitWindow(screenWidth, screenHeight, "Fish Bird");
     InitAudioDevice();
     Texture2D fish = LoadTexture("./images/peixe-padrao-pq.png");
-    Texture2D pipe = LoadTexture("./images/cano.png");
+    Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
+    Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     Music music = LoadMusicStream("./images/xuxa.mp3");
     PlayMusicStream(music);
     SetMusicVolume(music, 0.1f);
@@ -44,12 +45,14 @@ int main(void)
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
     // player.canJump = false;
-    EnvItem envItems[] = {
-        {{ 0, 400, 140, 200 }, 1, pipe},
-        {{ 300, 200, 140, 10 }, 1, pipe},
-        {{ 250, 300, 140, 10 }, 1, pipe},
-        {{ 650, 300, 140, 10 }, 1, pipe}
-    };
+    EnvItem envItems[5][2];
+
+    for(int i = 0; i < 5; i++) {
+        Rectangle rect = { 0, 250, 140, 200 };
+        envItems[i][0] = (EnvItem){ rect, 1, pipeFloor };
+        rect.y -= 550;
+        envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
+    }
 
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
 
@@ -69,7 +72,7 @@ int main(void)
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
 
-        UpdatePlayer(&player, envItems, envItemsLength, deltaTime);
+        UpdatePlayer(&player, *envItems, envItemsLength, deltaTime);
         UpdateMusicStream(music);
 
         //-----------------------------------------------------------------------------
@@ -85,13 +88,16 @@ int main(void)
             BeginMode2D(camera);
                 float speed = 100.0f;
                 for (int i = 0; i < envItemsLength; i++) {
-                    envItems[i].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
+                    envItems[i][0].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
+                    envItems[i][1].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
 
                     // Se o item saiu completamente da tela, move-o de volta para a direita
-                    if (envItems[i].rect.x + envItems[i].rect.width < player.position.x - 200) {
-                    envItems[i].rect.x += screenWidth + envItems[i].rect.width;
+                    if (envItems[i][0].rect.x + envItems[i][0].rect.width < player.position.x - 200) {
+                    envItems[i][0].rect.x += screenWidth + envItems[i][0].rect.width;
+                    envItems[i][1].rect.x += screenWidth + envItems[i][1].rect.width;
                     }
-                    DrawTextureV(envItems[i].texture, (Vector2){envItems[i].rect.x - 20, envItems[i].rect.y}, WHITE);
+                    DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
+                    DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
                 }
 
                 //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
@@ -108,7 +114,8 @@ int main(void)
     // De-Initialization
     //--------------------------------------------------------------------------------------
     UnloadTexture(fish);
-    UnloadTexture(pipe);
+    UnloadTexture(pipeCeiling);
+    UnloadTexture(pipeFloor);
     UnloadMusicStream(music);
     CloseWindow();        // Close window and OpenGL context
     //--------------------------------------------------------------------------------------
