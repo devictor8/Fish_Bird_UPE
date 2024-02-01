@@ -33,10 +33,11 @@ int main(void)
     const int screenHeight = 450;
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
+    InitAudioDevice();
     Texture2D texture = LoadTexture("./images/peixe-padrao-pq.png");
     Music music = LoadMusicStream("./images/xuxa.mp3");
     PlayMusicStream(music);
-    SetMusicVolume(music, 1.0f);
+    SetMusicVolume(music, 0.5f);
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
