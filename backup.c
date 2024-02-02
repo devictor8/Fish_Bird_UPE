@@ -23,6 +23,8 @@ typedef struct EnvItem {
 // Module functions declaration
 //----------------------------------------------------------------------------------
 void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta);
+void UpdatePipePosition();
+int RandInt();
 //-----------------------------------------------------------------------------------
 // Program main entry point
 //-----------------------------------------------------------------------------------
@@ -35,10 +37,11 @@ int main(void)
     srand(time(NULL));
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
-    InitAudioDevice();
     Texture2D fish = LoadTexture("./images/peixe-padrao-pq.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
+
+    InitAudioDevice();
     Music music = LoadMusicStream("./images/xuxa.mp3");
     PlayMusicStream(music);
     SetMusicVolume(music, 0.1f);
@@ -47,11 +50,12 @@ int main(void)
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
     //player.canJump = true;
-    EnvItem envItems[5][2];
 
+    EnvItem envItems[5][2];
     int distance = 0;
-    for(int i = 0; i < 5; i++) {
-        int randomY = 120 + rand() % (250 + 1 - 120);
+
+    for(int i = 0; i < 3; i++) {
+        int randomY = RandInt();
         Rectangle rect = { distance, randomY, 140, 200 };
         envItems[i][0] = (EnvItem){ rect, 1, pipeFloor };
         rect.y -= 550;
@@ -161,4 +165,21 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
         player->canJump = false;
     }
     else player->canJump = true;
+}
+
+void UpdatePipePosition(EnvItem *pipes, int length) {
+    for (int i = 0; i < length - 1; i++) {
+        pipes[i] = pipes[i + 1];
+    }
+
+    // Aqui você pode definir a nova posição para o último elemento
+    // pipes[length - 1] = novaPosicao;
+}
+
+int RandInt() {
+    return 120 + rand() % (250 + 1 - 120);
+}
+
+EnvItem CreatePipe() {
+    
 }
