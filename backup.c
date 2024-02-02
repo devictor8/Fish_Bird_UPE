@@ -25,6 +25,7 @@ typedef struct EnvItem {
 void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta);
 void UpdatePipePosition();
 int RandInt();
+EnvItem* CreatePipe();
 //-----------------------------------------------------------------------------------
 // Program main entry point
 //-----------------------------------------------------------------------------------
@@ -51,7 +52,7 @@ int main(void)
     player.speed = 0;
     //player.canJump = true;
 
-    EnvItem envItems[5][2];
+    EnvItem envItems[3][2];
     int distance = 0;
 
     for(int i = 0; i < 3; i++) {
@@ -63,6 +64,7 @@ int main(void)
         envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
         distance += 350;
     }
+
 
     int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
 
@@ -172,14 +174,27 @@ void UpdatePipePosition(EnvItem *pipes, int length) {
         pipes[i] = pipes[i + 1];
     }
 
-    // Aqui você pode definir a nova posição para o último elemento
-    // pipes[length - 1] = novaPosicao;
+
+    pipes[length - 1] = CreatePipe();
 }
 
 int RandInt() {
     return 120 + rand() % (250 + 1 - 120);
 }
 
-EnvItem CreatePipe() {
-    
+EnvItem* CreatePipe() {
+
+    EnvItem* envItems = (EnvItem*)malloc(2 * sizeof(EnvItem));
+    Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
+    Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
+
+    int randomY = RandInt();
+    Rectangle rect = { 700, randomY, 140, 200 };
+    envItems[0] = (EnvItem){ rect, 1, pipeFloor };
+    rect.y -= 550;
+    rect.height += 220;
+    envItems[1] = (EnvItem){ rect, 1, pipeCeiling};
+    UnloadTexture(pipeCeiling);
+    UnloadTexture(pipeFloor);
+    return envItems;
 }
