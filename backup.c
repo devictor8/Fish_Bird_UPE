@@ -6,6 +6,7 @@
 #define PLAYER_JUMP_SPD 250.0f
 #define PLAYER_HOR_SPD 200.0f
 #define BG_SPEED 350.0f
+#define ENV_ITEMS_LENGTH 3
 
 typedef struct Player {
     Vector2 position;
@@ -22,7 +23,7 @@ typedef struct EnvItem {
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
-void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta);
+void UpdatePlayer();
 void UpdatePipePosition();
 int RandInt();
 EnvItem* CreatePipe();
@@ -52,9 +53,12 @@ int main(void)
     player.speed = 0;
     //player.canJump = true;
 
-    EnvItem envItems[3][2];
+    EnvItem** envItems = malloc(3 * sizeof(EnvItem*));
+    for(int i = 0; i < 3; i++) {
+    envItems[i] = malloc(2 * sizeof(EnvItem));
+    }
+    
     int distance = 0;
-
     for(int i = 0; i < 3; i++) {
         int randomY = RandInt();
         Rectangle rect = { distance, randomY, 140, 200 };
@@ -64,9 +68,6 @@ int main(void)
         envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
         distance += 350;
     }
-
-
-    int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
 
     Camera2D camera = {};
     camera.target = (Vector2){50, 200};
@@ -87,7 +88,7 @@ int main(void)
 
         if (camera.zoom > 3.0f) camera.zoom = 3.0f;
         else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
-        UpdatePlayer(&player, *envItems, envItemsLength, deltaTime);
+        UpdatePlayer(&player, *envItems, deltaTime);
         UpdateMusicStream(music);
 
         //-----------------------------------------------------------------------------
@@ -102,7 +103,7 @@ int main(void)
 
             BeginMode2D(camera);
                 float speed = 100.0f;
-                for (int i = 0; i < envItemsLength; i++) {
+                for (int i = 0; i < ENV_ITEMS_LENGTH; i++) {
                     envItems[i][0].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
                     envItems[i][1].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
 
@@ -138,7 +139,7 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta)
+void UpdatePlayer(Player *player, EnvItem *envItems[], float delta)
 {
     if (IsKeyDown(KEY_SPACE))
     {
@@ -146,9 +147,9 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
     }
 
     bool hitObstacle = false;
-    for (int i = 0; i < envItemsLength; i++)
+    for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
-        EnvItem *ei = &envItems[i];
+        EnvItem *ei = envItems[i];
 
         if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei+1)->rect))
         {
@@ -169,11 +170,11 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
     else player->canJump = true;
 }
 
-void UpdatePipePosition(EnvItem *pipes, int length) {
+void UpdatePipePosition(EnvItem **pipes, int length) {
+    free(pipes[0]);
     for (int i = 0; i < length - 1; i++) {
-        pipes[i] = pipes[i + 1];
+        *pipes[i] = *pipes[i + 1];
     }
-
 
     pipes[length - 1] = CreatePipe();
 }
