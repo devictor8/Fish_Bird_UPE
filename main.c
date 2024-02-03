@@ -1,10 +1,13 @@
 #include "raylib.h"
 #include "raymath.h"
+#include <stdlib.h>
+#include <string.h>
 
 #define G 1000
 #define PLAYER_JUMP_SPD 250.0f
 #define PLAYER_HOR_SPD 200.0f
 #define BG_SPEED 350.0f
+#define ENV_ITEMS_LENGTH 4
 
 typedef struct Player {
     Vector2 position;
@@ -21,10 +24,13 @@ typedef struct EnvItem {
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
-void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta);
+void UpdatePlayer(Player *player, float delta);
+void UpdatePipePosition();
+int RandInt();
 //-----------------------------------------------------------------------------------
 // Program main entry point
 //-----------------------------------------------------------------------------------
+EnvItem envItems[ENV_ITEMS_LENGTH][2];
 int main(void)
 {
     // Initialization
@@ -45,19 +51,20 @@ int main(void)
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
     // player.canJump = false;
-    EnvItem envItems[5][2];
-
-    for(int i = 0; i < 5; i++) {
-        Rectangle rect = { 0, 250, 140, 200 };
+    
+    int distance = 0;
+    for(int i = 0; i < ENV_ITEMS_LENGTH; i++) {
+        int randomY = RandInt();
+        Rectangle rect = { distance, randomY, 140, 200 };
         envItems[i][0] = (EnvItem){ rect, 1, pipeFloor };
         rect.y -= 550;
+        rect.height += 220;
         envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
+        distance += 250;
     }
 
-    int envItemsLength = sizeof(envItems)/sizeof(envItems[0]);
-
     Camera2D camera = {};
-    camera.target = (Vector2){50, 200};
+    camera.target = (Vector2){80, 200};
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
     camera.rotation = 0.0f;
     camera.zoom = 1.0f;
@@ -72,7 +79,11 @@ int main(void)
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
 
-        UpdatePlayer(&player, *envItems, envItemsLength, deltaTime);
+        UpdatePlayer(&player, deltaTime);
+        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
+
+        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
+        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
         UpdateMusicStream(music);
 
         //-----------------------------------------------------------------------------
@@ -87,19 +98,18 @@ int main(void)
 
             BeginMode2D(camera);
                 float speed = 100.0f;
-                for (int i = 0; i < envItemsLength; i++) {
+                for (int i = 0; i < ENV_ITEMS_LENGTH; i++) {
                     envItems[i][0].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
                     envItems[i][1].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
 
                     // Se o item saiu completamente da tela, move-o de volta para a direita
-                    if (envItems[i][0].rect.x + envItems[i][0].rect.width < player.position.x - 200) {
-                    envItems[i][0].rect.x += screenWidth + envItems[i][0].rect.width;
-                    envItems[i][1].rect.x += screenWidth + envItems[i][1].rect.width;
-                    }
+                    
                     DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
                     DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
                 }
-
+                if (envItems[0][0].rect.x + envItems[0][0].rect.width < player.position.x - 150) {
+                        UpdatePipePosition();
+                    }
                 //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
                 // DrawRectangleRec(playerRect, RED);
                 
@@ -123,7 +133,7 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float delta)
+void UpdatePlayer(Player *player, float delta)
 {
     if (IsKeyDown(KEY_SPACE))
     {
@@ -131,19 +141,13 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
     }
     // esse trecho de código verifica se atingiu um obstaculo
     bool hitObstacle = false;
-    for (int i = 0; i < envItemsLength; i++)
+    for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
-        EnvItem *ei = envItems + i;
-        Vector2 *p = &(player->position);
-        if (ei->blocking &&
-    ei->rect.x <= p->x &&
-    ei->rect.x + ei->rect.width >= p->x &&
-    p->y <= ei->rect.y + ei->rect.height &&
-    p->y + player->speed*delta >= ei->rect.y + ei->rect.height)
+        EnvItem *ei = &envItems[i][0];
+        if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei + 1)->rect))
         {
             hitObstacle = true;
             player->speed = 0.0f;
-            p->y = ei->rect.y;
             break;
         }
     }
@@ -155,4 +159,23 @@ void UpdatePlayer(Player *player, EnvItem *envItems, int envItemsLength, float d
         player->canJump = false;
     }
     else player->canJump = true;
+}
+
+void UpdatePipePosition() {
+    for (int i = 0; i < ENV_ITEMS_LENGTH - 1; i++) {
+        memcpy(&envItems[i], &envItems[i + 1], sizeof(EnvItem));
+        memcpy(&envItems[i][1], &envItems[i + 1][1], sizeof(EnvItem));
+    }
+    Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
+    Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
+    int randomY = RandInt();
+    Rectangle rect = { 570, randomY, 140, 200 };
+    envItems[3][0]= (EnvItem){ rect, 1, pipeFloor };
+    rect.y -= 550;
+    rect.height += 220;
+    envItems[3][1] = (EnvItem){ rect, 1, pipeCeiling};
+}
+
+int RandInt() {
+    return 100 + rand() % (400 + 1 - 100);     
 }
