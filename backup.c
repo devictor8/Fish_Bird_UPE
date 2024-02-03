@@ -1,6 +1,6 @@
 #include "raylib.h"
-#include "stdlib.h"
-#include "time.h"
+#include "raymath.h"
+#include <stdlib.h>
 
 #define G 1000
 #define PLAYER_JUMP_SPD 250.0f
@@ -23,10 +23,9 @@ typedef struct EnvItem {
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
-void UpdatePlayer();
+void UpdatePlayer(Player *player, EnvItem *envItems, float delta);
 void UpdatePipePosition();
 int RandInt();
-EnvItem* CreatePipe();
 //-----------------------------------------------------------------------------------
 // Program main entry point
 //-----------------------------------------------------------------------------------
@@ -36,14 +35,12 @@ int main(void)
     //-------------------------------------------------------------------------------
     const int screenWidth = 800;
     const int screenHeight = 450;
-    srand(time(NULL));
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
+    InitAudioDevice();
     Texture2D fish = LoadTexture("./images/peixe-padrao-pq.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
-
-    InitAudioDevice();
     Music music = LoadMusicStream("./images/xuxa.mp3");
     PlayMusicStream(music);
     SetMusicVolume(music, 0.1f);
@@ -51,13 +48,9 @@ int main(void)
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
     player.speed = 0;
-    //player.canJump = true;
+    // player.canJump = false;
+    EnvItem envItems[3][2];
 
-    EnvItem** envItems = malloc(3 * sizeof(EnvItem*));
-    for(int i = 0; i < 3; i++) {
-    envItems[i] = malloc(2 * sizeof(EnvItem));
-    }
-    
     int distance = 0;
     for(int i = 0; i < 3; i++) {
         int randomY = RandInt();
@@ -84,10 +77,7 @@ int main(void)
         // Update
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
-        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
 
-        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
         UpdatePlayer(&player, *envItems, deltaTime);
         UpdateMusicStream(music);
 
@@ -111,7 +101,7 @@ int main(void)
                     if (envItems[i][0].rect.x + envItems[i][0].rect.width < player.position.x - 200) {
                         // envItems[i][0].rect.x += screenWidth + envItems[i][0].rect.width;
                         // envItems[i][1].rect.x += screenWidth + envItems[i][1].rect.width;
-                        UpdatePipePosition(&envItems);
+                        UpdatePipePosition(envItems);
                     }
                     DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
                     DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
@@ -140,26 +130,23 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, EnvItem **envItems[][2], float delta)
+void UpdatePlayer(Player *player, EnvItem *envItems, float delta)
 {
     if (IsKeyDown(KEY_SPACE))
     {
         player->speed = -PLAYER_JUMP_SPD;
     }
-
+    // esse trecho de código verifica se atingiu um obstaculo
     bool hitObstacle = false;
     for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
-        // Acessa o array bidimensional e depois o EnvItem dentro dele
-        EnvItem *ei1 = (*envItems[i])[0];
-        EnvItem *ei2 = (*envItems[i])[1];
-
-        if (CheckCollisionPointRec(player->position, ei1->rect) || CheckCollisionPointRec(player->position, ei2->rect))
+        EnvItem *ei = envItems + i;
+        Vector2 *p = &(player->position);
+        if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei + 1)->rect))
         {
-            TraceLog(LOG_INFO, "bateu");
             hitObstacle = true;
             player->speed = 0.0f;
-            //player->position.y = ei1->rect.y;
+            p->y = ei->rect.y;
             break;
         }
     }
@@ -174,31 +161,23 @@ void UpdatePlayer(Player *player, EnvItem **envItems[][2], float delta)
 }
 
 void UpdatePipePosition(EnvItem **pipes) {
-    free(pipes[0]);
     for (int i = 0; i < ENV_ITEMS_LENGTH - 1; i++) {
-        *pipes[i] = *pipes[i + 1];
+        pipes[i] = pipes[i + 1];
     }
-
-    pipes[ENV_ITEMS_LENGTH - 1] = CreatePipe();
+    Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
+    Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
+    int randomY = RandInt();
+    Rectangle rect = { 700, randomY, 140, 200 };
+    EnvItem pipe1 = (EnvItem){ rect, 1, pipeFloor };
+    rect.y -= 550;
+    rect.height += 220;
+    EnvItem pipe2 = (EnvItem){ rect, 1, pipeCeiling};
+    UnloadTexture(pipeCeiling);
+    UnloadTexture(pipeFloor);
+    EnvItem array[] = {pipe1, pipe2};
+    pipes[ENV_ITEMS_LENGTH - 1] = array; 
 }
 
 int RandInt() {
-    return 120 + rand() % (250 + 1 - 120);
-}
-
-EnvItem* CreatePipe() {
-
-    EnvItem* envItems = (EnvItem*)malloc(2 * sizeof(EnvItem));
-    Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
-    Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
-
-    int randomY = RandInt();
-    Rectangle rect = { 700, randomY, 140, 200 };
-    envItems[0] = (EnvItem){ rect, 1, pipeFloor };
-    rect.y -= 550;
-    rect.height += 220;
-    envItems[1] = (EnvItem){ rect, 1, pipeCeiling};
-    UnloadTexture(pipeCeiling);
-    UnloadTexture(pipeFloor);
-    return envItems;
+    return 120 + rand() % (250 + 1 - 120);     
 }
