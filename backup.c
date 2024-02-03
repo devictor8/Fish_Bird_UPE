@@ -109,8 +109,9 @@ int main(void)
 
                     // Se o item saiu completamente da tela, move-o de volta para a direita
                     if (envItems[i][0].rect.x + envItems[i][0].rect.width < player.position.x - 200) {
-                        envItems[i][0].rect.x += screenWidth + envItems[i][0].rect.width;
-                        envItems[i][1].rect.x += screenWidth + envItems[i][1].rect.width;
+                        // envItems[i][0].rect.x += screenWidth + envItems[i][0].rect.width;
+                        // envItems[i][1].rect.x += screenWidth + envItems[i][1].rect.width;
+                        UpdatePipePosition(&envItems);
                     }
                     DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
                     DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
@@ -139,7 +140,7 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, EnvItem *envItems[], float delta)
+void UpdatePlayer(Player *player, EnvItem **envItems[][2], float delta)
 {
     if (IsKeyDown(KEY_SPACE))
     {
@@ -149,14 +150,16 @@ void UpdatePlayer(Player *player, EnvItem *envItems[], float delta)
     bool hitObstacle = false;
     for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
-        EnvItem *ei = envItems[i];
+        // Acessa o array bidimensional e depois o EnvItem dentro dele
+        EnvItem *ei1 = (*envItems[i])[0];
+        EnvItem *ei2 = (*envItems[i])[1];
 
-        if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei+1)->rect))
+        if (CheckCollisionPointRec(player->position, ei1->rect) || CheckCollisionPointRec(player->position, ei2->rect))
         {
             TraceLog(LOG_INFO, "bateu");
             hitObstacle = true;
             player->speed = 0.0f;
-            //player->position.y = ei->rect.y;
+            //player->position.y = ei1->rect.y;
             break;
         }
     }
@@ -170,13 +173,13 @@ void UpdatePlayer(Player *player, EnvItem *envItems[], float delta)
     else player->canJump = true;
 }
 
-void UpdatePipePosition(EnvItem **pipes, int length) {
+void UpdatePipePosition(EnvItem **pipes) {
     free(pipes[0]);
-    for (int i = 0; i < length - 1; i++) {
+    for (int i = 0; i < ENV_ITEMS_LENGTH - 1; i++) {
         *pipes[i] = *pipes[i + 1];
     }
 
-    pipes[length - 1] = CreatePipe();
+    pipes[ENV_ITEMS_LENGTH - 1] = CreatePipe();
 }
 
 int RandInt() {
