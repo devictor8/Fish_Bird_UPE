@@ -12,12 +12,14 @@
 typedef struct Player {
     Vector2 position;
     float speed;
+    int score;
     bool canJump;
 } Player;
 
 typedef struct EnvItem {
     Rectangle rect;
     int blocking;
+    bool passed;
     Texture2D texture;
 } EnvItem;
 
@@ -49,6 +51,7 @@ int main(void)
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
+    player.score = 0;
     player.speed = 0;
     // player.canJump = false;
     
@@ -56,10 +59,10 @@ int main(void)
     for(int i = 0; i < ENV_ITEMS_LENGTH; i++) {
         int randomY = RandInt();
         Rectangle rect = { distance, randomY, 140, 200 };
-        envItems[i][0] = (EnvItem){ rect, 1, pipeFloor };
+        envItems[i][0] = (EnvItem){ rect, 1, false, pipeFloor };
         rect.y -= 550;
         rect.height += 220;
-        envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
+        envItems[i][1] = (EnvItem){ rect, 1, false,pipeCeiling};
         distance += 250;
     }
 
@@ -72,7 +75,7 @@ int main(void)
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
-    // Main game loop
+    
     while (!WindowShouldClose())
     {
         // Update
@@ -105,18 +108,20 @@ int main(void)
                     // Se o item saiu completamente da tela, move-o de volta para a direita
                     
                     DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
-                    DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
+                    DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1]. rect.x - 20, envItems[i][1].rect.y}, WHITE);
                 }
                 if (envItems[0][0].rect.x + envItems[0][0].rect.width < player.position.x - 150) {
                         UpdatePipePosition();
                     }
-                //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
-                // DrawRectangleRec(playerRect, RED);
-                
-                // DrawCircle(player.position.x, player.position.y, 5, GOLD);
+                if (envItems[0][0].rect.x + envItems[0][0].rect.width < player.position.x) {
+                    if (!envItems[0][0].passed) {
+                        envItems[0][0].passed = true;
+                        player.score++;
+                    }
+                }
 
             EndMode2D();
-            
+             DrawText(TextFormat("Score: %i", player.score), 100, 30, 20, BLACK);
         EndDrawing();
         //----------------------------------------------------------------------------------
     }
@@ -170,10 +175,10 @@ void UpdatePipePosition() {
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     int randomY = RandInt();
     Rectangle rect = { 570, randomY, 140, 200 };
-    envItems[3][0]= (EnvItem){ rect, 1, pipeFloor };
+    envItems[3][0]= (EnvItem){ rect, 1, false,pipeFloor };
     rect.y -= 550;
     rect.height += 220;
-    envItems[3][1] = (EnvItem){ rect, 1, pipeCeiling};
+    envItems[3][1] = (EnvItem){ rect, 1, false,pipeCeiling};
 }
 
 int RandInt() {
