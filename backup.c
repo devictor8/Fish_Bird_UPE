@@ -8,6 +8,7 @@
 #define PLAYER_HOR_SPD 200.0f
 #define BG_SPEED 350.0f
 #define ENV_ITEMS_LENGTH 4
+#define NUM_TEXTURES 4
 
 typedef struct Player {
     Vector2 position;
@@ -43,7 +44,10 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
     InitAudioDevice();
-    Texture2D fish = LoadTexture("./images/fish-fin-default.png");
+    Texture2D fishTextures[NUM_TEXTURES];
+    fishTextures[0] = LoadTexture("./images/fish-fin-default.png");
+    fishTextures[1] = LoadTexture("./images/fish-fin-up.png");
+    fishTextures[2] = LoadTexture("./images/fish-fin-down.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     Music music = LoadMusicStream("./images/xuxa.mp3");
@@ -54,6 +58,7 @@ int main(void)
     PlayMusicStream(music);
     SetMusicVolume(music, 0.2f);
 
+    int frameCounter = 0;
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
     player.score = 0;
@@ -93,7 +98,7 @@ int main(void)
 
         if (screen == -1) {
             ClearBackground(BLUE);
-            DrawTexture(fish, player.position.x + 300, player.position.y, WHITE); 
+            DrawTexture(fishTextures[0], player.position.x + 300, player.position.y, WHITE); 
             DrawText("Press Enter to start", 300, 170, 20, WHITE);
             if (IsKeyPressed(KEY_ENTER)){
                 player.position = (Vector2){ -150, 150 };
@@ -105,12 +110,15 @@ int main(void)
 
         if (screen == 0) {
             screen = UpdatePlayer(&player, deltaTime);
-            DrawTexture(fish, player.position.x + 300, player.position.y, WHITE); 
+            frameCounter++;
+            Texture2D currentFishTexture = fishTextures[(frameCounter / 8) % 2];
+            DrawTexture(currentFishTexture, player.position.x + 300, player.position.y, WHITE);
             ClearBackground(BLUE);
 
             BeginMode2D(camera);
                 float speed = 100.0f;
                 for (int i = 0; i < ENV_ITEMS_LENGTH; i++) {
+                     
                     envItems[i][0].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
                     envItems[i][1].rect.x -= speed * GetFrameTime(); // Atualiza a posição x do item
 
@@ -129,7 +137,7 @@ int main(void)
                         PlaySound(music2);
                     }
                 }
-        
+
 
             EndMode2D();
             DrawText(TextFormat("Score: %i", player.score), 100, 30, 20, BLACK);
@@ -155,7 +163,9 @@ int main(void)
 
     // De-Initialization
     //--------------------------------------------------------------------------------------
-    UnloadTexture(fish);
+    UnloadTexture(fishTextures[0]);
+    UnloadTexture(fishTextures[1]);
+    UnloadTexture(fishTextures[2]);
     UnloadTexture(pipeCeiling);
     UnloadTexture(pipeFloor);
     UnloadMusicStream(music);
@@ -224,8 +234,4 @@ void CreatePipe(Texture2D pipeFloor, Texture2D pipeCeiling) {
         envItems[i][1] = (EnvItem){ rect, 1, false, pipeCeiling};
         distance += 250;
     }
-}
-
-void DrawFish() {
-
 }
