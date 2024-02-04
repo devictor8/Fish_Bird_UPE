@@ -49,8 +49,9 @@ int main(void)
     Music music = LoadMusicStream("./images/xuxa.mp3");
     Sound music2 = LoadSound("./audio/point.ogg");
     Sound hit = LoadSound("./audio/hit.ogg");
+    SetSoundVolume(hit, 0.2f);
     PlayMusicStream(music);
-    SetMusicVolume(music, 0.1f);
+    SetMusicVolume(music, 0.2f);
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
