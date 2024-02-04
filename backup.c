@@ -12,21 +12,24 @@
 typedef struct Player {
     Vector2 position;
     float speed;
+    int score;
     bool canJump;
 } Player;
 
 typedef struct EnvItem {
     Rectangle rect;
     int blocking;
+    bool passed;
     Texture2D texture;
 } EnvItem;
 
 //----------------------------------------------------------------------------------
 // Module functions declaration
 //----------------------------------------------------------------------------------
-void UpdatePlayer(Player *player, float delta);
+int UpdatePlayer(Player *player, float delta);
 void UpdatePipePosition();
 int RandInt();
+void CreatePipe();
 //-----------------------------------------------------------------------------------
 // Program main entry point
 //-----------------------------------------------------------------------------------
@@ -40,29 +43,24 @@ int main(void)
 
     InitWindow(screenWidth, screenHeight, "Fish Bird");
     InitAudioDevice();
-    Texture2D fish = LoadTexture("./images/peixe-padrao-pq.png");
+    Texture2D fish = LoadTexture("./images/fish-fin-default.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     Music music = LoadMusicStream("./images/xuxa.mp3");
+    Sound music2 = LoadSound("./audio/point.ogg");
+    Sound hit = LoadSound("./audio/hit.ogg");
+    SetSoundVolume(hit, 0.3f);
+    SetSoundVolume(music2, 0.3f);
     PlayMusicStream(music);
-    SetMusicVolume(music, 0.1f);
+    SetMusicVolume(music, 0.2f);
 
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
+    player.score = 0;
     player.speed = 0;
     // player.canJump = false;
-    
-    int distance = 0;
-    for(int i = 0; i < ENV_ITEMS_LENGTH; i++) {
-        int randomY = RandInt();
-        Rectangle rect = { distance, randomY, 140, 200 };
-        envItems[i][0] = (EnvItem){ rect, 1, pipeFloor };
-        rect.y -= 550;
-        rect.height += 220;
-        envItems[i][1] = (EnvItem){ rect, 1, pipeCeiling};
-        distance += 250;
-    }
 
+    CreatePipe(pipeFloor, pipeCeiling);
     Camera2D camera = {};
     camera.target = (Vector2){80, 200};
     camera.offset = (Vector2){ screenWidth/2.0f, screenHeight/2.0f };
@@ -72,14 +70,13 @@ int main(void)
     SetTargetFPS(60);
     //--------------------------------------------------------------------------------------
 
-    // Main game loop
+    int screen  = -1;
     while (!WindowShouldClose())
     {
         // Update
         //----------------------------------------------------------------------------------
         float deltaTime = GetFrameTime();
-
-        UpdatePlayer(&player, deltaTime);
+        
         camera.zoom += ((float)GetMouseWheelMove()*0.05f);
 
         if (camera.zoom > 3.0f) camera.zoom = 3.0f;
@@ -91,9 +88,24 @@ int main(void)
         // Draw 
         //----------------------------------------------------------------------------------
         // DrawTextureV(texture, player.position, WHITE); 
-        DrawTexture(fish, player.position.x + 300, player.position.y, WHITE); 
+        
         BeginDrawing();
 
+        if (screen == -1) {
+            ClearBackground(BLUE);
+            DrawTexture(fish, player.position.x + 300, player.position.y, WHITE); 
+            DrawText("Press Enter to start", 300, 170, 20, WHITE);
+            if (IsKeyPressed(KEY_ENTER)){
+                player.position = (Vector2){ -150, 150 };
+                player.score = 0;
+                CreatePipe(pipeFloor, pipeCeiling);
+                screen = 0;
+            }         
+        } 
+
+        if (screen == 0) {
+            screen = UpdatePlayer(&player, deltaTime);
+            DrawTexture(fish, player.position.x + 300, player.position.y, WHITE); 
             ClearBackground(BLUE);
 
             BeginMode2D(camera);
@@ -105,20 +117,40 @@ int main(void)
                     // Se o item saiu completamente da tela, move-o de volta para a direita
                     
                     DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x - 20, envItems[i][0].rect.y}, WHITE);
-                    DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x - 20, envItems[i][1].rect.y}, WHITE);
+                    DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1]. rect.x - 20, envItems[i][1].rect.y}, WHITE);
                 }
                 if (envItems[0][0].rect.x + envItems[0][0].rect.width < player.position.x - 150) {
                         UpdatePipePosition();
                     }
-                //Rectangle playerRect = { player.position.x - 20, player.position.y - 40, 40, 40 };
-                // DrawRectangleRec(playerRect, RED);
-                
-                // DrawCircle(player.position.x, player.position.y, 5, GOLD);
+                if (envItems[0][0].rect.x + envItems[0][0].rect.width < player.position.x) {
+                    if (!envItems[0][0].passed) {
+                        envItems[0][0].passed = true;
+                        player.score++;
+                        PlaySound(music2);
+                    }
+                }
+        
 
             EndMode2D();
-            
+            DrawText(TextFormat("Score: %i", player.score), 100, 30, 20, BLACK);
+            PlaySound(hit);
+        }
+
+        if (screen == 1) {
+            ClearBackground(BLUE);
+            DrawText("Game Over", 300, 170, 40, WHITE);
+            DrawText(TextFormat("Score: %i", player.score), 360, 225, 20, WHITE);
+
+            if (IsKeyPressed(KEY_ENTER)){
+                player.position = (Vector2){ -150, 150 };
+                player.score = 0;
+                CreatePipe(pipeFloor, pipeCeiling);
+                screen = -1;
+            }          
+        }
+
         EndDrawing();
-        //----------------------------------------------------------------------------------
+        //               ----------------------------------------------------------------------------------
     }
 
     // De-Initialization
@@ -133,22 +165,22 @@ int main(void)
     return 0;
 }
 
-void UpdatePlayer(Player *player, float delta)
+int UpdatePlayer(Player *player, float delta)
 {
     if (IsKeyDown(KEY_SPACE))
     {
         player->speed = -PLAYER_JUMP_SPD;
     }
     // esse trecho de código verifica se atingiu um obstaculo
-    bool hitObstacle = false;
+    int hitObstacle = 0;
     for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
         EnvItem *ei = &envItems[i][0];
         if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei + 1)->rect))
         {
-            hitObstacle = true;
+            hitObstacle = 1;
             player->speed = 0.0f;
-            break;
+            return hitObstacle;
         }
     }
 
@@ -159,6 +191,7 @@ void UpdatePlayer(Player *player, float delta)
         player->canJump = false;
     }
     else player->canJump = true;
+    return hitObstacle;
 }
 
 void UpdatePipePosition() {
@@ -170,12 +203,29 @@ void UpdatePipePosition() {
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     int randomY = RandInt();
     Rectangle rect = { 570, randomY, 140, 200 };
-    envItems[3][0]= (EnvItem){ rect, 1, pipeFloor };
+    envItems[3][0]= (EnvItem){ rect, 1, false,pipeFloor };
     rect.y -= 550;
     rect.height += 220;
-    envItems[3][1] = (EnvItem){ rect, 1, pipeCeiling};
+    envItems[3][1] = (EnvItem){ rect, 1, false,pipeCeiling};
 }
 
 int RandInt() {
     return 100 + rand() % (400 + 1 - 100);     
+}
+
+void CreatePipe(Texture2D pipeFloor, Texture2D pipeCeiling) {
+    int distance = 0;
+    for(int i = 0; i < ENV_ITEMS_LENGTH; i++) {
+        int randomY = RandInt();
+        Rectangle rect = { distance, randomY, 140, 200 };
+        envItems[i][0] = (EnvItem){ rect, 1, false, pipeFloor };
+        rect.y -= 550;
+        rect.height += 220;
+        envItems[i][1] = (EnvItem){ rect, 1, false, pipeCeiling};
+        distance += 250;
+    }
+}
+
+void DrawFish() {
+
 }
