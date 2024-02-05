@@ -109,6 +109,7 @@ int main(void)
         } 
 
         if (screen == 0) {
+            HideCursor();
             screen = UpdatePlayer(&player, deltaTime);
             frameCounter++;
             Texture2D currentFishTexture = fishTextures[(frameCounter / 8) % 2];
@@ -145,6 +146,7 @@ int main(void)
         }
 
         if (screen == 1) {
+            HideCursor();
             ClearBackground(BLUE);
             DrawText("Game Over", 300, 170, 40, WHITE);
             DrawText(TextFormat("Score: %i", player.score), 360, 225, 20, WHITE);
