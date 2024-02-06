@@ -43,7 +43,8 @@ int main(void)
     fishTextures[2] = LoadTexture("./images/fish-fin-down.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
-    Music music = LoadMusicStream("./images/xuxa.mp3");
+    Texture2D background = LoadTexture("./images/bg-picture.jpg");
+    Music music = LoadMusicStream("./audio/xuxa.mp3");
     Sound music2 = LoadSound("./audio/point.ogg");
     Sound hit = LoadSound("./audio/hit.ogg");
     SetSoundVolume(hit, 0.3f);
@@ -56,7 +57,6 @@ int main(void)
     player.position = (Vector2){ -150, 150 };
     player.score = 0;
     player.speed = 0;
-    // player.canJump = false;
 
     CreatePipe(pipeFloor, pipeCeiling);
     Camera2D camera = {};
@@ -70,21 +70,18 @@ int main(void)
     int screen  = -1;
     while (!WindowShouldClose())
     {
-
         float deltaTime = GetFrameTime();
         
-        camera.zoom += ((float)GetMouseWheelMove()*0.05f);
-
-        if (camera.zoom > 3.0f) camera.zoom = 3.0f;
-        else if (camera.zoom < 0.25f) camera.zoom = 0.25f;
         UpdateMusicStream(music);
         
         BeginDrawing();
+        ClearBackground(RAYWHITE);
+        DrawTexture(background, 0, 0, WHITE);
 
         if (screen == -1) 
         {
+            
             HideCursor();
-            ClearBackground(BLUE);
             DrawTexture(fishTextures[0], player.position.x + 300, player.position.y, WHITE); 
             DrawText("Press Enter to start", 80, 210, 20, WHITE);
             for (int i = 0; i < ENV_ITEMS_LENGTH; i++) 
@@ -98,6 +95,7 @@ int main(void)
         if (screen == 0) 
         
         {
+            
             HideCursor();
             screen = UpdatePlayer(&player, deltaTime);
             frameCounter++;
@@ -183,9 +181,8 @@ int UpdatePlayer(Player *player, float delta)
     {
         player->position.y += player->speed*delta;
         player->speed += G*delta;
-        player->canJump = false;
+
     }
-    else player->canJump = true;
     return hitObstacle;
 }
 
