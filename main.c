@@ -14,12 +14,10 @@ typedef struct Player {
     Vector2 position;
     float speed;
     int score;
-    bool canJump;
 } Player;
 
 typedef struct EnvItem {
     Rectangle rect;
-    int blocking;
     bool passed;
     Texture2D texture;
 } EnvItem;
@@ -43,14 +41,16 @@ int main(void)
     fishTextures[2] = LoadTexture("./images/fish-fin-down.png");
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
-    Texture2D background = LoadTexture("./images/bg-picture.jpg");
+    Texture2D background = LoadTexture("./images/bg-picture.png");
+    Image icon = LoadImage("./images/fish-fin-default.png");
     Music music = LoadMusicStream("./audio/xuxa.mp3");
-    Sound music2 = LoadSound("./audio/point.ogg");
+    Sound point = LoadSound("./audio/point.ogg");
     Sound hit = LoadSound("./audio/hit.ogg");
     SetSoundVolume(hit, 0.3f);
-    SetSoundVolume(music2, 0.3f);
+    SetSoundVolume(point, 0.3f);
     PlayMusicStream(music);
     SetMusicVolume(music, 0.2f);
+    SetWindowIcon(icon);
 
     int frameCounter = 0;
     Player player = { 0 };
@@ -75,7 +75,7 @@ int main(void)
         UpdateMusicStream(music);
         
         BeginDrawing();
-        ClearBackground(RAYWHITE);
+        
         DrawTexture(background, 0, 0, WHITE);
 
         if (screen == -1) 
@@ -101,7 +101,6 @@ int main(void)
             frameCounter++;
             Texture2D currentFishTexture = fishTextures[(frameCounter / 8) % 2];
             DrawTexture(currentFishTexture, player.position.x + 300, player.position.y, WHITE);
-            ClearBackground(BLUE);
 
             BeginMode2D(camera);
                 float speed = 100.0f;
@@ -122,7 +121,7 @@ int main(void)
                     if (!envItems[0][0].passed) {
                         envItems[0][0].passed = true;
                         player.score++;
-                        PlaySound(music2);
+                        PlaySound(point);
                     }
                 }
 
@@ -136,7 +135,6 @@ int main(void)
         
         {
             HideCursor();
-            ClearBackground(BLUE);
             DrawText("Game Over", 300, 170, 40, WHITE);
             DrawText(TextFormat("Score: %i", player.score), 360, 225, 20, WHITE);
 
@@ -154,7 +152,11 @@ int main(void)
     UnloadTexture(fishTextures[2]);
     UnloadTexture(pipeCeiling);
     UnloadTexture(pipeFloor);
+    UnloadTexture(background);
     UnloadMusicStream(music);
+    UnloadSound(point);
+    UnloadSound(hit);
+    UnloadImage(icon);
     CloseWindow();
     return 0;
 }
@@ -165,25 +167,20 @@ int UpdatePlayer(Player *player, float delta)
     {
         player->speed = -PLAYER_JUMP_SPD;
     }  
-    int hitObstacle = 0;
     for (int i = 0; i < ENV_ITEMS_LENGTH; i++)
     {
         EnvItem *ei = &envItems[i][0];
         if (CheckCollisionPointRec(player->position, ei->rect) || CheckCollisionPointRec(player->position, (ei + 1)->rect) || player->position.y >= 440)
         {
-            hitObstacle = 1;
             player->speed = 0.0f;
-            return hitObstacle;
+            return 1;
         }
     }
 
-    if (!hitObstacle)
-    {
-        player->position.y += player->speed*delta;
-        player->speed += G*delta;
+    player->position.y += player->speed*delta;
+    player->speed += G*delta;
 
-    }
-    return hitObstacle;
+    return 0;
 }
 
 void UpdatePipePosition() {
@@ -195,10 +192,10 @@ void UpdatePipePosition() {
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     int randomY = RandInt();
     Rectangle rect = { 570, randomY, 135 , 200 };
-    envItems[3][0]= (EnvItem){ rect, 1, false,pipeFloor };
+    envItems[3][0]= (EnvItem){ rect, false, pipeFloor };
     rect.y -= 575;
     rect.height += 250;
-    envItems[3][1] = (EnvItem){ rect, 1, false,pipeCeiling};
+    envItems[3][1] = (EnvItem){ rect, false, pipeCeiling};
 }
 
 int RandInt() {
@@ -210,10 +207,10 @@ void CreatePipe(Texture2D pipeFloor, Texture2D pipeCeiling) {
     for(int i = 0; i < ENV_ITEMS_LENGTH; i++) {
         int randomY = RandInt();
         Rectangle rect = { distance, randomY, 135 , 200 };
-        envItems[i][0] = (EnvItem){ rect, 1, false, pipeFloor };
+        envItems[i][0] = (EnvItem){ rect, false, pipeFloor };
         rect.y -= 575;
         rect.height += 250;
-        envItems[i][1] = (EnvItem){ rect, 1, false, pipeCeiling};
+        envItems[i][1] = (EnvItem){ rect, false, pipeCeiling};
         distance += 250;
     }
 }
