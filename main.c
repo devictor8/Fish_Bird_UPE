@@ -14,6 +14,7 @@ typedef struct Player {
     Vector2 position;
     float speed;
     int score;
+    int bestScore;
 } Player;
 
 typedef struct EnvItem {
@@ -26,6 +27,8 @@ int UpdatePlayer(Player *player, float delta);
 void UpdatePipePosition();
 int RandInt();
 void CreatePipe();
+int FinalScreen();
+int InitScreen();
 
 EnvItem envItems[ENV_ITEMS_LENGTH][2];
 int main(void)
@@ -56,6 +59,7 @@ int main(void)
     Player player = { 0 };
     player.position = (Vector2){ -150, 150 };
     player.score = 0;
+    player.bestScore = 0;
     player.speed = 0;
 
     CreatePipe(pipeFloor, pipeCeiling);
@@ -71,31 +75,17 @@ int main(void)
     while (!WindowShouldClose())
     {
         float deltaTime = GetFrameTime();
-        
         UpdateMusicStream(music);
-        
         BeginDrawing();
-        
         DrawTexture(background, 0, 0, WHITE);
 
         if (screen == -1) 
         {
-            
-            HideCursor();
-            DrawTexture(fishTextures[0], player.position.x + 300, player.position.y, WHITE); 
-            DrawText("Press Enter to start", 80, 210, 20, WHITE);
-            for (int i = 0; i < ENV_ITEMS_LENGTH; i++) 
-            {
-                DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x + 300, envItems[i][0].rect.y}, WHITE);
-                DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x + 300, envItems[i][1].rect.y}, WHITE);
-                }
-            if (IsKeyPressed(KEY_ENTER)) screen = 0;        
+            screen = InitScreen(player, fishTextures, pipeFloor, pipeCeiling);
         } 
 
         if (screen == 0) 
-        
         {
-            
             HideCursor();
             screen = UpdatePlayer(&player, deltaTime);
             frameCounter++;
@@ -121,29 +111,21 @@ int main(void)
                     if (!envItems[0][0].passed) {
                         envItems[0][0].passed = true;
                         player.score++;
+                        if (player.score > player.bestScore) {
+                            player.bestScore = player.score;
+                        }
                         PlaySound(point);
                     }
                 }
-
-
             EndMode2D();
-            DrawText(TextFormat("Score: %i", player.score), 100, 30, 20, BLACK);
+            DrawText(TextFormat("Score: %i", player.score), 90, 30, 20, BLACK);
+            DrawText(TextFormat("Best score: %i", player.bestScore), 90, 50, 20, BLACK);
             PlaySound(hit);
         }
 
         if (screen == 1) 
-        
         {
-            HideCursor();
-            DrawText("Game Over", 300, 170, 40, WHITE);
-            DrawText(TextFormat("Score: %i", player.score), 360, 225, 20, WHITE);
-
-            if (IsKeyPressed(KEY_ENTER)){
-                player.position = (Vector2){ -150, 150 };
-                player.score = 0;
-                CreatePipe(pipeFloor, pipeCeiling);
-                screen = -1;
-            }          
+            screen = FinalScreen(&player, pipeFloor, pipeCeiling);
         }
         EndDrawing();
     }
@@ -191,7 +173,7 @@ void UpdatePipePosition() {
     Texture2D pipeFloor = LoadTexture("./images/cano-baixo.png");
     Texture2D pipeCeiling = LoadTexture("./images/cano-cima.png");
     int randomY = RandInt();
-    Rectangle rect = { 570, randomY, 135 , 200 };
+    Rectangle rect = { 550, randomY, 135 , 200 };
     envItems[3][0]= (EnvItem){ rect, false, pipeFloor };
     rect.y -= 575;
     rect.height += 250;
@@ -213,4 +195,34 @@ void CreatePipe(Texture2D pipeFloor, Texture2D pipeCeiling) {
         envItems[i][1] = (EnvItem){ rect, false, pipeCeiling};
         distance += 250;
     }
+}
+
+int InitScreen(Player player, Texture2D *fishTextures, Texture2D pipeFloor, Texture2D pipeCeiling)
+{
+    HideCursor();
+    DrawTexture(fishTextures[0], player.position.x + 300, player.position.y, WHITE); 
+    DrawText("Press Enter to start", 80, 210, 20, WHITE);
+    for (int i = 0; i < ENV_ITEMS_LENGTH; i++) 
+    {
+        DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x + 300, envItems[i][0].rect.y}, WHITE);
+        DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x + 300, envItems[i][1].rect.y}, WHITE);
+        }
+    if (IsKeyPressed(KEY_ENTER)) return 0;
+    return -1;
+}
+
+int FinalScreen(Player *player, Texture2D pipeFloor, Texture2D pipeCeiling) 
+{
+    HideCursor();
+    DrawText("Game Over", 300, 170, 40, WHITE);
+    DrawText(TextFormat("Score: %i", player->score), 360, 225, 20, WHITE);
+    DrawText(TextFormat("Best score: %i", player->bestScore), 360, 250, 20, WHITE);
+
+    if (IsKeyPressed(KEY_ENTER)){
+        player->position = (Vector2){ -150, 150 };
+        player->score = 0;
+        CreatePipe(pipeFloor, pipeCeiling);
+        return -1;
+    } 
+    return 1;
 }
