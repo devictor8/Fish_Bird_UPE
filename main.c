@@ -5,7 +5,6 @@
 
 #define G 1000
 #define PLAYER_JUMP_SPD 230.0f
-#define PLAYER_HOR_SPD 200.0f
 #define BG_SPEED 350.0f
 #define ENV_ITEMS_LENGTH 4
 #define NUM_TEXTURES 4
@@ -201,13 +200,13 @@ int InitScreen(Player player, Texture2D *fishTextures, Texture2D pipeFloor, Text
 {
     HideCursor();
     DrawTexture(fishTextures[0], player.position.x + 300, player.position.y, WHITE); 
-    DrawText("Press Enter to start", 80, 210, 20, WHITE);
+    DrawText("Press SPACE to start", 80, 210, 20, WHITE);
     for (int i = 0; i < ENV_ITEMS_LENGTH; i++) 
     {
         DrawTextureV(envItems[i][0].texture, (Vector2){envItems[i][0].rect.x + 300, envItems[i][0].rect.y}, WHITE);
         DrawTextureV(envItems[i][1].texture, (Vector2){envItems[i][1].rect.x + 300, envItems[i][1].rect.y}, WHITE);
         }
-    if (IsKeyPressed(KEY_ENTER)) return 0;
+    if (IsKeyPressed(KEY_SPACE)) return 0;
     return -1;
 }
 
@@ -215,8 +214,9 @@ int FinalScreen(Player *player, Texture2D pipeFloor, Texture2D pipeCeiling)
 {
     HideCursor();
     DrawText("Game Over", 300, 170, 40, WHITE);
-    DrawText(TextFormat("Score: %i", player->score), 360, 225, 20, WHITE);
-    DrawText(TextFormat("Best score: %i", player->bestScore), 360, 250, 20, WHITE);
+    DrawText(TextFormat("Score: %i", player->score), 300, 225, 20, WHITE);
+    DrawText(TextFormat("Best score: %i", player->bestScore), 300, 250, 20, WHITE);
+    DrawText(TextFormat("Press ENTER to restart"), 285, 375, 20, WHITE);
 
     if (IsKeyPressed(KEY_ENTER)){
         player->position = (Vector2){ -150, 150 };
